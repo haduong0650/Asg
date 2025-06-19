@@ -9,22 +9,20 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.split(' ')[1];
+    const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
+      return res.status(401).json({ error: 'Not authenticated1' });
     }
 
-    // Xác thực token với Supabase Auth API
-    const userRes = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/user`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY // Thêm API key vào header
+    let user;
+    try {
+      const { data: userData, error: authError } = await supabase.auth.getUser(token);
+      user = userData?.user;
+      if (authError || !user) {
+        return res.status(401).json({ error: 'Not authenticated2' });
       }
-    });
-    const userResText = await userRes.text();
-    if (!userRes.ok) {
-      return res.status(401).json({ error: 'Invalid session', details: userResText });
+    } catch (err) {
+      return res.status(401).json({ error: 'Not authenticated3' });
     }
 
     const { name, description, price, image } = req.body;
@@ -36,24 +34,19 @@ export default async function handler(req, res) {
           name: name || null,
           description: description || null,
           price: price || 0,
-          image: image || null
+          image: image || null,
+          userId: user.id,
         }])
         .select();
 
       if (error) {
-        return res.status(500).json({ error: error.message });
+        throw new Error(error.message);
       }
 
       return res.status(201).json(data[0]);
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ error });
     }
-  }
-
-  // Thêm logic chuyển hướng sau khi thêm thành công
-  if (req.method === 'POST' && res.statusCode === 201) {
-    res.writeHead(302, { Location: '/' });
-    res.end();
   }
 
   return res.status(405).end();

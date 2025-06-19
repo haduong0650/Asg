@@ -2,9 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { supabase } from '../lib/supabase';
 
-const ProductForm = ({ productData = {}, onSubmit }) => {
+const ProductForm = ({ productData = {} }) => {
   const router = useRouter();
   const [form, setForm] = useState({
     name: productData.name || '',
@@ -17,26 +16,6 @@ const ProductForm = ({ productData = {}, onSubmit }) => {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [session, setSession] = useState(null);
-
-  useEffect(() => {
-    // Get initial session
-    const getSession = async () => {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      setSession(currentSession);
-    };
-    
-    getSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-    });
-
-    return () => {
-      if (subscription) subscription.unsubscribe();
-    };
-  }, []);
 
   useEffect(() => {
     if (productData && productData._id) {
@@ -69,7 +48,7 @@ const ProductForm = ({ productData = {}, onSubmit }) => {
     const { name, value } = e.target;
     setForm(prevForm => ({
       ...prevForm,
-      [name]: value,
+      [name]: value, // Đảm bảo dòng này đã được sửa
     }));
   };
 
@@ -93,21 +72,11 @@ const ProductForm = ({ productData = {}, onSubmit }) => {
     setIsSubmitting(true);
     setMessage('');
 
-    // Lấy session mới nhất trước khi submit
-    const { data: { session: latestSession } } = await supabase.auth.getSession();
-    console.log('Token used for add product:', latestSession?.access_token);
-    if (!latestSession) {
-      setMessage('Bạn phải đăng nhập để sử dụng chức năng này.');
-      setIsSubmitting(false);
-      return;
-    }
-
     if (!form.name || !form.description || !form.price) {
       setMessage('Please fill in all required fields.');
       setIsSubmitting(false);
       return;
     }
-
     if (isNaN(parseFloat(form.price)) || parseFloat(form.price) < 0) {
       setMessage('Price must be a positive number.');
       setIsSubmitting(false);
@@ -123,9 +92,6 @@ const ProductForm = ({ productData = {}, onSubmit }) => {
       try {
         const uploadRes = await fetch('/api/upload-image', {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${latestSession.access_token}`
-          },
           body: formData,
         });
         const uploadData = await uploadRes.json();
@@ -147,40 +113,32 @@ const ProductForm = ({ productData = {}, onSubmit }) => {
     const productDataToSend = { ...form, image: imageUrl };
 
     try {
-      if (onSubmit) {
-        // Use the onSubmit prop if provided
-        await onSubmit(productDataToSend);
+      const apiEndpoint = productData._id
+        ? `/api/products/${productData._id}`
+        : '/api/products';
+      const httpMethod = productData._id ? 'PUT' : 'POST';
+
+      const res = await fetch(apiEndpoint, {
+        method: httpMethod,
+        headers: {
+          'Content-Type': 'application/json',
+           'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(productDataToSend),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
         setMessage('Product saved successfully!');
+        setTimeout(() => {
+          router.push('/');
+        }, 1500);
       } else {
-        // Fallback to default behavior
-        const apiEndpoint = productData._id
-          ? `/api/products/${productData._id}`
-          : '/api/products';
-        const httpMethod = productData._id ? 'PUT' : 'POST';
-
-        const res = await fetch(apiEndpoint, {
-          method: httpMethod,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${latestSession.access_token}`,
-          },
-          body: JSON.stringify(productDataToSend),
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-          setMessage('Product saved successfully!');
-          setTimeout(() => {
-            router.push('/');
-          }, 1500);
-        } else {
-          throw new Error(data.message || 'Something went wrong!');
-        }
+        setMessage(`Error: ${data.message || 'Something went wrong!'}`);
       }
     } catch (error) {
-      setMessage(`Error: ${error.message}`);
-      console.error('Submit error:', error);
+      setMessage(`Network error: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -189,11 +147,7 @@ const ProductForm = ({ productData = {}, onSubmit }) => {
   return (
     <div className="form-container">
       <h1 className="form-title">{productData._id ? 'Edit Product' : 'Add New Product'}</h1>
-      {message && (
-        <div className={`message ${message.includes('Error') || message.includes('upload error') ? 'error' : 'success'}`}>
-          {message}
-        </div>
-      )}
+      {message && <p className={`message ${message.includes('Error') || message.includes('upload error') ? 'error' : 'success'}`}>{message}</p>}
       <form onSubmit={handleSubmit} className="product-form">
         <div className="form-group">
           <label htmlFor="name">Name:</label>
@@ -201,8 +155,8 @@ const ProductForm = ({ productData = {}, onSubmit }) => {
             type="text"
             id="name"
             name="name"
-            value={form.name}
-            onChange={handleChange}
+            value={form.name} // <-- Đảm bảo có thuộc tính này
+            onChange={handleChange} // <-- Đảm bảo có thuộc tính này
             required
           />
         </div>
@@ -211,8 +165,8 @@ const ProductForm = ({ productData = {}, onSubmit }) => {
           <textarea
             id="description"
             name="description"
-            value={form.description}
-            onChange={handleChange}
+            value={form.description} // <-- Đảm bảo có thuộc tính này
+            onChange={handleChange} // <-- Đảm bảo có thuộc tính này
             required
           />
         </div>
@@ -222,11 +176,12 @@ const ProductForm = ({ productData = {}, onSubmit }) => {
             type="number"
             id="price"
             name="price"
-            value={form.price}
-            onChange={handleChange}
+            value={form.price} // <-- Đảm bảo có thuộc tính này
+            onChange={handleChange} // <-- Đảm bảo có thuộc tính này
             required
           />
         </div>
+        {/* Trường input file */}
         <div className="form-group">
           <label htmlFor="imageUpload">Upload Image (Optional):</label>
           <input
@@ -242,18 +197,13 @@ const ProductForm = ({ productData = {}, onSubmit }) => {
             </div>
           )}
         </div>
-        <div className="form-actions">
-          <button 
-            type="submit" 
-            disabled={isSubmitting || uploadingImage}
-            className="submit-button"
-          >
-            {isSubmitting ? 'Saving...' : 'Save Product'}
-          </button>
-          <Link href="/" className="cancel-button">
+
+        <button type="submit" disabled={isSubmitting || uploadingImage} className="submit-button">
+          {isSubmitting ? 'Saving...' : (uploadingImage ? 'Uploading Image...' : (productData._id ? 'Update Product' : 'Add Product'))}
+        </button>
+        <Link href="/" className="cancel-button">
             Cancel
-          </Link>
-        </div>
+        </Link>
       </form>
 
       <style jsx>{`
