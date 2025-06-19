@@ -2,9 +2,11 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useRouter } from 'next/router'
 
 const Navbar = () => {
   const [user, setUser] = useState(null)
+  const router = useRouter()
 
   useEffect(() => {
     const getUser = async () => {
@@ -25,8 +27,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    localStorage.removeItem('token'); 
-    window.location.href = '/login'
+    router.push('/login')
   }
 
   return (
