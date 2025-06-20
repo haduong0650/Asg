@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import Link from 'next/link'; // Đảm bảo dòng này có
+import { supabase } from '../../lib/supabase';
 
 export default function ProductDetail() {
   const router = useRouter();
@@ -40,6 +41,7 @@ export default function ProductDetail() {
           throw new Error('User not authenticated');
         }
         const token = session.access_token;
+
         const res = await fetch(`/api/products/${id}`, {
           method: 'DELETE',
           headers: {
@@ -47,13 +49,13 @@ export default function ProductDetail() {
             'Authorization': `Bearer ${token}`,
           },
         });
-        const data = await res.json();
 
         if (!res.ok) {
-          throw new Error(data.message || 'Failed to delete product');
+          throw new Error('Failed to delete product');
         }
+
         alert('Product deleted successfully!');
-        router.push('/'); // Redirect to homepage after deletion
+        router.push('/products'); // Redirect to products page after deletion
       } catch (err) {
         alert(`Error deleting product: ${err.message}`);
       }
@@ -65,128 +67,40 @@ export default function ProductDetail() {
   if (!product) return <p>Product not found.</p>;
 
   return (
-    <div>
+    <div className="max-w-4xl mx-auto p-6">
       <Head>
-        <title>{product.name}</title>
-        <meta name="description" content={product.description} />
+        <title>{product.name} Details</title>
       </Head>
 
-      <div className="product-detail-card">
-        <img src={product.image || '/placeholder.png'} alt={product.name} className="detail-image" />
-        <div className="detail-info">
-          <h1 className="detail-name">{product.name}</h1>
-          <p className="detail-price">${product.price.toFixed(2)}</p>
-          <p className="detail-description">{product.description}</p>
-          <div className="detail-actions">
-            <Link href={`/products/edit/${product._id}`} className="button edit-button">
-              Edit Product
-            </Link>
-            
-            const isLoggedIn = Boolean(localStorage.getItem('token'));
-            {isLoggedIn && (
-           <button onClick={handleDelete} className="button delete-button">
-            Delete Product
-           </button>
-)}
-            <Link href="/" className="button back-button">
-              Back to List
-            </Link>
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex flex-col sm:flex-row">
+          <div className="flex justify-center items-center bg-gray-100 rounded-md h-64 sm:w-1/2">
+            <img src={product.image || '/placeholder.png'} alt={product.name} className="max-h-full max-w-full object-contain" />
+          </div>
+          <div className="sm:w-1/2 sm:pl-6">
+            <h1 className="text-2xl font-bold text-blue-600 mb-4">{product.name}</h1>
+            <p className="text-green-600 font-bold text-xl mb-4">${product.price.toFixed(2)}</p>
+            <p className="text-gray-600 mb-4">{product.description}</p>
+            <div className="flex space-x-4">
+              
+              <button
+                onClick={
+                  () => router.push(`/products/edit/${id}`)
+                }
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+              >
+                Edit
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .product-detail-card {
-          display: flex;
-          flex-direction: column;
-          background-color: white;
-          border-radius: 10px;
-          box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-          overflow: hidden;
-          margin: 2rem auto;
-        }
-        @media (min-width: 768px) {
-          .product-detail-card {
-            flex-direction: row;
-          }
-        }
-        .detail-image {
-          width: 100%;
-          height: 350px;
-          object-fit: cover;
-          display: block;
-        }
-        @media (min-width: 768px) {
-          .detail-image {
-            width: 50%;
-            height: auto;
-          }
-        }
-        .detail-info {
-          padding: 2.5rem;
-          flex-grow: 1;
-        }
-        .detail-name {
-          font-size: 2.5rem;
-          margin-top: 0;
-          color: #2c3e50;
-        }
-        .detail-price {
-          font-size: 1.8rem;
-          color: #27ae60;
-          font-weight: bold;
-          margin-bottom: 1.5rem;
-        }
-        .detail-description {
-          font-size: 1.1rem;
-          color: #555;
-          line-height: 1.8;
-          margin-bottom: 2rem;
-        }
-        .detail-actions {
-          display: flex;
-          gap: 1rem;
-          flex-wrap: wrap;
-        }
-        .button {
-          padding: 0.8rem 1.5rem;
-          border-radius: 8px;
-          text-decoration: none;
-          font-weight: bold;
-          cursor: pointer;
-          transition: background-color 0.2s ease, transform 0.1s ease;
-          border: none;
-        }
-        .button:active {
-          transform: translateY(1px);
-        }
-        .edit-button {
-          background-color: #3498db;
-          color: white;
-        }
-        .edit-button:hover {
-          background-color: #2980b9;
-        }
-        .delete-button {
-          background-color: #e74c3c;
-          color: white;
-        }
-        .delete-button:hover {
-          background-color: #c0392b;
-        }
-        .back-button {
-          background-color: #95a5a6;
-          color: white;
-        }
-        .back-button:hover {
-          background-color: #7f8c8d;
-        }
-        .error-message {
-          color: red;
-          text-align: center;
-          font-weight: bold;
-        }
-      `}</style>
     </div>
   );
 }

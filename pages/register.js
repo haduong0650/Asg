@@ -8,13 +8,14 @@ export default function RegisterPage() {
   const [errorMsg, setError] = useState('')
   const router = useRouter()
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showVerifyPopup, setShowVerifyPopup] = useState(false);
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
     
     if (password !== confirmPassword) {
-      errorMsg('Passwords do not match.');
+      setError('Passwords do not match.');
       return;
     }
     const { error } = await supabase.auth.signUp({ email, password })
@@ -23,8 +24,13 @@ export default function RegisterPage() {
       setError(error.message)
     } else {
       setError(null)
-      router.push('/login')
+      setShowVerifyPopup(true);
     }
+  }
+
+  const handleClosePopup = () => {
+    setShowVerifyPopup(false);
+    router.push('/login');
   }
 
   return (
@@ -71,6 +77,20 @@ export default function RegisterPage() {
 
         {errorMsg && <p className="text-red-500 text-center mt-4">{errorMsg}</p>}
       </form>
+      {showVerifyPopup && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <div className="bg-white p-6 rounded shadow-lg text-center">
+            <h2 className="text-lg font-semibold mb-4">Đăng ký thành công!</h2>
+            <p className="mb-4">Hãy kiểm tra email để xác thực tài khoản của bạn.</p>
+            <button
+              onClick={handleClosePopup}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

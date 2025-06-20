@@ -39,7 +39,7 @@ const ProductForm = ({ productData = {}, onSubmit }) => {
   }, []);
 
   useEffect(() => {
-    if (productData && productData._id) {
+    if (productData && productData.id) {
       setForm({
         name: productData.name || '',
         description: productData.description || '',
@@ -63,7 +63,7 @@ const ProductForm = ({ productData = {}, onSubmit }) => {
     if (message) {
       setMessage('');
     }
-  }, [productData?._id, message]);
+  }, [productData?.id, message]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -153,10 +153,10 @@ const ProductForm = ({ productData = {}, onSubmit }) => {
         setMessage('Product saved successfully!');
       } else {
         // Fallback to default behavior
-        const apiEndpoint = productData._id
-          ? `/api/products/${productData._id}`
+        const apiEndpoint = productData.id
+          ? `/api/products/${productData.id}`
           : '/api/products';
-        const httpMethod = productData._id ? 'PUT' : 'POST';
+        const httpMethod = productData.id ? 'PUT' : 'POST';
 
         const res = await fetch(apiEndpoint, {
           method: httpMethod,
@@ -170,10 +170,7 @@ const ProductForm = ({ productData = {}, onSubmit }) => {
         const data = await res.json();
 
         if (res.ok) {
-          setMessage('Product saved successfully!');
-          setTimeout(() => {
-            router.push('/');
-          }, 1500);
+          router.push('/products');
         } else {
           throw new Error(data.message || 'Something went wrong!');
         }
@@ -187,180 +184,80 @@ const ProductForm = ({ productData = {}, onSubmit }) => {
   };
 
   return (
-    <div className="form-container">
-      <h1 className="form-title">{productData._id ? 'Edit Product' : 'Add New Product'}</h1>
+    <div className="max-w-lg mx-auto bg-white p-6 rounded-lg shadow-md">
+      <h1 className="form-title">{productData.id ? 'Edit Product' : ''}</h1>
       {message && (
-        <div className={`message ${message.includes('Error') || message.includes('upload error') ? 'error' : 'success'}`}>
+        <div
+          className={`p-4 rounded-md text-center font-semibold ${message.includes('Error') ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}
+        >
           {message}
         </div>
       )}
-      <form onSubmit={handleSubmit} className="product-form">
-        <div className="form-group">
-          <label htmlFor="name">Name:</label>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
           <input
             type="text"
             id="name"
             name="name"
             value={form.name}
             onChange={handleChange}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             required
           />
         </div>
-        <div className="form-group">
-          <label htmlFor="description">Description:</label>
+        <div>
+          <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
           <textarea
             id="description"
             name="description"
             value={form.description}
             onChange={handleChange}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             required
           />
         </div>
-        <div className="form-group">
-          <label htmlFor="price">Price:</label>
+        <div>
+          <label htmlFor="price" className="block text-sm font-medium text-gray-700">Price</label>
           <input
             type="number"
             id="price"
             name="price"
             value={form.price}
             onChange={handleChange}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             required
           />
         </div>
-        <div className="form-group">
-          <label htmlFor="imageUpload">Upload Image (Optional):</label>
+        <div>
+          <label htmlFor="imageUpload" className="block text-sm font-medium text-gray-700">Upload Image (Optional)</label>
           <input
             type="file"
             id="imageUpload"
             name="imageUpload"
             accept="image/*"
             onChange={handleFileChange}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           />
           {filePreview && (
-            <div className="image-preview-container">
-              <img src={filePreview} alt="Image Preview" className="image-preview" />
+            <div className="mt-4 text-center">
+              <img src={filePreview} alt="Image Preview" className="inline-block max-w-full h-auto rounded-md border border-gray-300" />
             </div>
           )}
         </div>
-        <div className="form-actions">
-          <button 
-            type="submit" 
+        <div className="flex justify-between">
+          <button
+            type="submit"
             disabled={isSubmitting || uploadingImage}
-            className="submit-button"
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {isSubmitting ? 'Saving...' : 'Save Product'}
           </button>
-          <Link href="/" className="cancel-button">
+          <Link href="/" className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
             Cancel
           </Link>
         </div>
       </form>
-
-      <style jsx>{`
-        .form-container {
-          max-width: 600px;
-          margin: 2rem auto;
-          padding: 2rem;
-          background-color: white;
-          border-radius: 10px;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-        .form-title {
-          text-align: center;
-          color: #2c3e50;
-          margin-bottom: 2rem;
-        }
-        .message {
-          padding: 1rem;
-          border-radius: 5px;
-          margin-bottom: 1.5rem;
-          text-align: center;
-          font-weight: bold;
-        }
-        .message.success {
-          background-color: #d4edda;
-          color: #155724;
-          border: 1px solid #c3e6cb;
-        }
-        .message.error {
-          background-color: #f8d7da;
-          color: #721c24;
-          border: 1px solid #f5c6cb;
-        }
-        .product-form .form-group {
-          margin-bottom: 1.5rem;
-        }
-        .product-form label {
-          display: block;
-          margin-bottom: 0.5rem;
-          font-weight: bold;
-          color: #555;
-        }
-        .product-form input[type="text"],
-        .product-form input[type="number"],
-        .product-form textarea {
-          width: 100%;
-          padding: 0.8rem;
-          border: 1px solid #ddd;
-          border-radius: 5px;
-          font-size: 1rem;
-          box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
-        }
-        .product-form textarea {
-          resize: vertical;
-          min-height: 120px;
-        }
-        .product-form input:focus,
-        .product-form textarea:focus {
-          outline: none;
-          border-color: #3498db;
-          box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
-        }
-        .submit-button {
-          background-color: #28a745;
-          color: white;
-          padding: 1rem 1.5rem;
-          border: none;
-          border-radius: 5px;
-          font-size: 1.1rem;
-          cursor: pointer;
-          transition: background-color 0.2s ease;
-          width: 100%;
-          margin-top: 1rem;
-        }
-        .submit-button:hover:not(:disabled) {
-          background-color: #218838;
-        }
-        .submit-button:disabled {
-          background-color: #cccccc;
-          cursor: not-allowed;
-        }
-        .cancel-button {
-            display: block;
-            text-align: center;
-            margin-top: 1rem;
-            padding: 1rem 1.5rem;
-            background-color: #f0ad4e;
-            color: white;
-            border-radius: 5px;
-            text-decoration: none;
-            transition: background-color 0.2s ease;
-        }
-        .cancel-button:hover {
-            background-color: #ec971f;
-        }
-        .image-preview-container {
-          margin-top: 1rem;
-          text-align: center;
-        }
-        .image-preview {
-          max-width: 100%;
-          max-height: 200px;
-          object-fit: contain;
-          border: 1px solid #ddd;
-          border-radius: 5px;
-        }
-      `}</style>
     </div>
   );
 };

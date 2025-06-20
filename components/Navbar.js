@@ -31,65 +31,34 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="navbar">
-      <Link href="/" className="navbar-brand">
+    <nav className="flex justify-between items-center bg-gray-800 text-white p-4 shadow-lg">
+      <Link href="/" className="text-xl font-bold text-blue-400 hover:text-blue-300">
         EcomApp
       </Link>
-      <div className="navbar-links">
+      <div className="flex space-x-4">
         {user ? (
           <>
-            <Link href="/products/add" className="navbar-link">
+            <Link href="/products/add" className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
               Add Product
             </Link>
-            <button className="navbar-link" onClick={handleLogout}>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+            >
               Logout
             </button>
           </>
         ) : (
           <>
-            <Link href="/login" className="navbar-link">
+            <Link href="/login" className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
               Login
             </Link>
-            <Link href="/register" className="navbar-link">
+            <Link href="/register" className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
               Register
             </Link>
           </>
         )}
       </div>
-
-      <style jsx>{`
-        .navbar {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 1rem 2rem;
-          background-color: #a3d4f2;
-          color: #0288d1;
-        }
-        .navbar-brand {
-          font-size: 1.5rem;
-          font-weight: bold;
-          color: white;
-          text-decoration: none;
-        }
-        .navbar-links {
-          display: flex;
-          gap: 1rem;
-        }
-        .navbar-link {
-          color: white;
-          text-decoration: none;
-          padding: 0.5rem 1rem;
-          border-radius: 5px;
-          background: none;
-          border: none;
-          cursor: pointer;
-          font: inherit;
-        }
-        .navbar-link:hover {
-          background-color: #555;
-        }
-      `}</style>
     </nav>
   )
 }

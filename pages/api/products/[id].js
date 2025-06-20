@@ -37,8 +37,7 @@ export default async function handler(req, res) {
     const { data, error } = await supabase
       .from('products')
       .update({ name, description, price, image })
-      .eq('id', id)
-      .eq('user_id', user.id); // bảo vệ: chỉ người tạo mới sửa
+      .eq('id', id);
 
     if (error) return res.status(500).json({ error: error.message });
 
@@ -50,8 +49,7 @@ export default async function handler(req, res) {
     const { error } = await supabase
       .from('products')
       .delete()
-      .eq('id', id)
-      .eq('user_id', user.id); // bảo vệ: chỉ người tạo mới xoá
+      .eq('id', id);
 
     if (error) return res.status(500).json({ error: error.message });
 

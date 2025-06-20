@@ -32,7 +32,14 @@ export default function Login() {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message === 'Email not confirmed') {
+          setErrorMsg('Tài khoản chưa xác nhận email. Vui lòng kiểm tra email để xác thực tài khoản.');
+        } else {
+          setErrorMsg(error.message || 'An error occurred during login');
+        }
+        return;
+      }
 
       if (data?.session) {
         // Log access token for debug
@@ -49,7 +56,11 @@ export default function Login() {
       }
     } catch (error) {
       console.error('Login error:', error);
-      setErrorMsg(error.message || 'An error occurred during login');
+      if (error.message === 'Email not confirmed') {
+        setErrorMsg('Tài khoản chưa xác nhận email. Vui lòng kiểm tra email để xác thực tài khoản.');
+      } else {
+        setErrorMsg(error.message || 'An error occurred during login');
+      }
     } finally {
       setIsLoading(false);
     }

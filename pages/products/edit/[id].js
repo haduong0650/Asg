@@ -1,4 +1,4 @@
-// pages/products/edit/[id].js
+// pages/products/[id].js
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
